@@ -2,7 +2,7 @@ FROM python:3.8-bullseye
 
 # Systeemvereisten installeren
 #RUN apt-get update && \
-#    apt-get install -y git && \
+#   apt-get install -y git && \
 #   apt-get clean
 
 # Google Drive libraries installeren
