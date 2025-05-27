@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir \
 WORKDIR /app
 
 # Repo ophalen van GitHub
-RUN git clone https://github.com/jensvandereeckt/shuffle_1.git /app/code
+RUN git clone https://github.com/jensvandereeckt/shuffle_2.git /app/code
 
 # Kopieer de relevante Python scripts naar werkmap
 RUN cp /app/code/final-ranking.py . && \
