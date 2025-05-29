@@ -18,7 +18,7 @@ credentials = service_account.Credentials.from_service_account_file(
 drive_service = build("drive", "v3", credentials=credentials)
 
 # === ZOEK ALLE reduced_votes_*.json BESTANDEN ===
-print("🔍 Zoeken naar stem-bestanden (reduced_votes_*.json)...")
+print(" Zoeken naar stem-bestanden (reduced_votes_*.json)...")
 query = f"'{INPUT_FOLDER_ID}' in parents and name contains 'reduced_votes_' and name contains '.json'"
 results = drive_service.files().list(q=query, fields="files(id, name)").execute()
 files = results.get("files", [])
@@ -34,7 +34,7 @@ for file in files:
     country_code = filename.replace("reduced_votes_", "").replace(".json", "").lower()
     output_filename = f"final_ranking_{country_code}.txt"
 
-    print(f"⬇️ Downloaden van '{filename}'...")
+    print(f" Downloaden van '{filename}'...")
     request = drive_service.files().get_media(fileId=file_id)
     fh = io.BytesIO()
     downloader = MediaIoBaseDownload(fh, request)
@@ -72,7 +72,7 @@ for file in files:
 
     for old_file in existing:
         drive_service.files().delete(fileId=old_file["id"]).execute()
-        print(f"🗑️ Oud bestand '{output_filename}' verwijderd uit Google Drive.")
+        print(f" Oud bestand '{output_filename}' verwijderd uit Google Drive.")
 
     file_metadata = {
         "name": output_filename,
@@ -84,14 +84,14 @@ for file in files:
         media_body=media,
         fields="id"
     ).execute()
-    print(f"📤 Bestand '{output_filename}' geüpload naar Google Drive.")
+    print(f" Bestand '{output_filename}' geüpload naar Google Drive.")
 
 # === GLOBALE RANKING ===
 global_ranking = sorted(total_votes.items(), key=lambda x: x[1], reverse=True)
 global_output_filename = "global_winner_ranking.txt"
 
 with open(global_output_filename, "w") as f:
-    f.write("🌍 Global Final Song Ranking:\n\n")
+    f.write(" Global Final Song Ranking:\n\n")
     for i, (song, votes) in enumerate(global_ranking, start=1):
         line = f"{i}. Song {song}: {votes} votes"
         f.write(line + "\n")
@@ -105,7 +105,7 @@ existing = drive_service.files().list(
 
 for old_file in existing:
     drive_service.files().delete(fileId=old_file["id"]).execute()
-    print(f"🗑️ Oud bestand '{global_output_filename}' verwijderd uit Google Drive.")
+    print(f" Oud bestand '{global_output_filename}' verwijderd uit Google Drive.")
 
 file_metadata = {
     "name": global_output_filename,
@@ -118,4 +118,4 @@ drive_service.files().create(
     fields="id"
 ).execute()
 
-print(f"🌍 📤 Globaal rankingbestand '{global_output_filename}' geüpload naar Drive.")
+print(f" Globaal rankingbestand '{global_output_filename}' geüpload naar Drive.")
