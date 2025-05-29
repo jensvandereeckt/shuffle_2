@@ -13,16 +13,17 @@ from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
 SERVICE_ACCOUNT_FILE = "service_account.json"
 INPUT_FOLDER_ID = "1BqafbJaqYDzTe0en_IQnsPDZOGoHizql"     # reduced_votes folder
 OUTPUT_FOLDER_ID = "1oSYINzluIqyg9qWG88zRGLkaffKxjs8Q"    # ranking_votes folder
-LOGS_FOLDER_ID = "1hXa-sxiy11T4NKLxWfDodhkliWcQr2Ba"             # logs folder op Drive
+LOGS_FOLDER_ID = "1hXa-sxiy11T4NKLxWfDodhkliWcQr2Ba"       # logs folder op Drive
 RUNTIME_SECONDS = 120
 CHECK_INTERVAL = 15
 
 log_filename = f"ranking_log_shuffle2_mode_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
 
 def log(msg):
-    print(msg)
+    timestamped = f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}"
+    print(timestamped, flush=True)
     with open(log_filename, "a") as f:
-        f.write(f"[{datetime.now().isoformat()}] {msg}\n")
+        f.write(timestamped + "\n")
 
 def upload_text_file_to_drive(filename, folder_id):
     file_metadata = {"name": filename, "parents": [folder_id]}
@@ -43,7 +44,7 @@ def main():
     total_all_votes_flat = []
     start_time = time.time()
 
-    log("Starten met het controleren van stem-bestanden (mode-methode)...")
+    log("🔁 Starten met het controleren van stem-bestanden (mode-methode)...")
 
     try:
         while time.time() - start_time < RUNTIME_SECONDS:
@@ -60,13 +61,13 @@ def main():
                 country_code = filename.replace("reduced_votes_", "").replace(".json", "").lower()
                 output_filename = f"final_ranking_mode_{country_code}.txt"
 
-                log(f"Bestand gevonden: {filename}")
+                log(f"📄 Bestand gevonden: {filename}")
                 request = drive_service.files().get_media(fileId=file_id)
                 fh = io.BytesIO()
                 downloader = MediaIoBaseDownload(fh, request)
                 done = False
                 while not done:
-                    status, done = downloader.next_chunk()
+                    _, done = downloader.next_chunk()
                 fh.seek(0)
                 data = json.load(fh)
 
@@ -97,10 +98,13 @@ def main():
                     for line in output_lines:
                         f.write(line + "\n")
 
-                log(f"Resultaten opgeslagen in {output_filename}")
+                log(f"💾 Resultaten opgeslagen in {output_filename}")
 
-                # Verwijder oud bestand indien nodig
-                old_files = drive_service.files().list(q=f"name='{output_filename}' and '{OUTPUT_FOLDER_ID}' in parents", fields="files(id)").execute().get("files", [])
+                # Oud bestand verwijderen
+                old_files = drive_service.files().list(
+                    q=f"name='{output_filename}' and '{OUTPUT_FOLDER_ID}' in parents",
+                    fields="files(id)"
+                ).execute().get("files", [])
                 for old in old_files:
                     drive_service.files().delete(fileId=old["id"]).execute()
 
@@ -110,7 +114,7 @@ def main():
                     media_body=media,
                     fields="id"
                 ).execute()
-                log(f"Geüpload naar Google Drive: {output_filename}")
+                log(f"☁️ Geüpload naar Google Drive: {output_filename}")
 
             time.sleep(CHECK_INTERVAL)
 
@@ -119,7 +123,7 @@ def main():
 
     finally:
         if total_votes:
-            log("Verwerken van globale ranking...")
+            log("🌍 Verwerken van globale ranking...")
             total_final_ranking = sorted(total_votes.items(), key=lambda x: x[1], reverse=True)
             most_voted_total = mode(total_all_votes_flat)
             top_song_total = total_final_ranking[0][0]
@@ -137,7 +141,10 @@ def main():
                     f.write(line + "\n")
                     log(line)
 
-            old_global = drive_service.files().list(q=f"name='{total_filename}' and '{OUTPUT_FOLDER_ID}' in parents", fields="files(id)").execute().get("files", [])
+            old_global = drive_service.files().list(
+                q=f"name='{total_filename}' and '{OUTPUT_FOLDER_ID}' in parents",
+                fields="files(id)"
+            ).execute().get("files", [])
             for old in old_global:
                 drive_service.files().delete(fileId=old["id"]).execute()
 
@@ -147,10 +154,10 @@ def main():
                 media_body=media,
                 fields="id"
             ).execute()
-            log(f"Globale ranking opgeslagen en geüpload naar Drive als {total_filename}")
+            log(f"📤 Globale ranking geüpload naar Drive als '{total_filename}'")
 
         upload_text_file_to_drive(log_filename, LOGS_FOLDER_ID)
-        log("Logbestand succesvol geüpload.")
+        log("✅ Logbestand succesvol geüpload.")
         log("🏁 Script afgesloten.")
 
 if __name__ == "__main__":
